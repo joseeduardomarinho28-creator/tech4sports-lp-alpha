@@ -22,6 +22,7 @@
     (function () {
       var d = document.documentElement;
       try {
+        d.classList.add('acc'); // há JS: os textos das Frentes já nascem fechados, antes da primeira pintura
         if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         d.classList.add('anim');
         if (!(window.CSS && CSS.supports && CSS.supports('animation-timeline', 'view()'))) d.classList.add('scrub-js');
@@ -232,9 +233,10 @@
       display: grid;
       grid-template-columns: auto 1fr;
       column-gap: 16px;
-      row-gap: 8px;
-      padding-block: 24px 28px;
+      --pt: 24px;
+      padding-block: var(--pt) 28px;
     }
+    .front > p { margin-top: 8px; }
     .front .rule { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: currentColor; transform-origin: 0 50%; }
     .front .num {
       grid-row: 1 / span 2;
@@ -272,6 +274,65 @@
       .front.is-center .rule::after { opacity: 1; transform: none; }
       .front.is-center .num { translate: 8px 0; }
     }
+
+    /* Frentes expansíveis. Sem JS o painel fica aberto e não há botão; com JS (html.acc) começa fechado.
+       Fechado: altura 0 (0fr), invisível para o olho, o Tab e o leitor de tela */
+    .painel { grid-column: 2; display: grid; grid-template-rows: 1fr; }
+    .painel-in { min-height: 0; overflow: hidden; margin-inline: -8px; }
+    .painel-corpo { padding: 12px 8px 8px; }
+    .extra { max-width: 40ch; font-size: 1.0625rem; line-height: 1.45; text-wrap: pretty; }
+    .entrar {
+      display: inline-flex;
+      align-items: center;
+      min-height: 48px;
+      margin-top: 4px;
+      color: var(--paper);
+      font-weight: 700;
+      font-size: 1.0625rem;
+      line-height: 1.3;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 6px;
+    }
+    .entrar:hover { text-decoration-color: var(--accent); text-decoration-thickness: 3px; }
+    html.acc .front { cursor: pointer; }
+    html.acc .painel-corpo { cursor: auto; }
+    html.acc .painel {
+      grid-template-rows: 0fr;
+      opacity: 0;
+      visibility: hidden;
+      transition: grid-template-rows 300ms ease, opacity 300ms ease, visibility 300ms ease;
+    }
+    html.acc .front.aberta .painel { grid-template-rows: 1fr; opacity: 1; visibility: visible; }
+    /* o botão (criado pelo JS dentro do h3) tem 48px sem mudar a altura da linha */
+    .front h3 button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 48px;
+      margin: min(0px, calc((1.08em - 48px) / 2)) -6px;
+      padding: 0 6px;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: inherit;
+      letter-spacing: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .front h3 button:focus-visible { outline-offset: -3px; }
+    /* "+" no fim da linha, na altura do título; vira "×" quando abre */
+    .ico {
+      position: absolute;
+      right: 0;
+      top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: calc(clamp(1.5rem, 4vw, 3rem) * 1.08);
+    }
+    .ico > span { display: block; font-size: 1.75rem; line-height: 1; transition: transform 300ms ease; }
+    .front.aberta .ico > span { transform: rotate(45deg); }
 
     .call { position: relative; border-bottom: 1px solid var(--ink); }
     .call h2 {
@@ -334,7 +395,9 @@
       .band h2.label { grid-column: 1 / span 2; padding-top: 0.5rem; }
       .band .body { grid-column: 3 / -1; }
       .about { grid-column: 3 / -1; max-width: 28ch; }
-      .front { grid-template-columns: clamp(3.5rem, 7vw, 6rem) 5fr 4fr; column-gap: var(--gap); align-items: baseline; }
+      .front { grid-template-columns: clamp(3.5rem, 7vw, 6rem) 5fr 4fr; column-gap: var(--gap); align-items: baseline; padding-right: 40px; }
+      .front > p { margin-top: 0; }
+      .painel { grid-column: 3; grid-row: 2; } /* abaixo da descrição curta, na mesma coluna */
       .front .num { grid-row: auto; }
       .front h3 { grid-column: 2; }
       .front p { grid-column: 3; font-size: clamp(1.25rem, 1.7vw, 1.375rem); }
@@ -519,6 +582,12 @@
     .front .num { --a: 0; --b: 0.55; }
     .front h3 { --a: 0.05; --b: 0.65; }
     .front p { --a: 0.1; --b: 0.8; }
+    .front .ico { --a: 0.05; --b: 0.65; }
+    /* enquanto há uma frente aberta (ou abrindo/fechando), as linhas ficam no estado final: a altura muda
+       sem reabrir a animação de entrada */
+    html.anim .frentes .fronts.solta .m { opacity: 1 !important; transform: none !important; }
+    /* a linha com o foco também: o Tab nunca para num botão que a rolagem ainda não terminou de mostrar */
+    html.anim .frentes .front:focus-within .m { opacity: 1 !important; transform: none !important; }
 
     /* Frentes: faixa ancorada curta, as três linhas entram em sequência */
     @media (min-width: 56.25em) and (min-height: 40em) {
@@ -534,6 +603,7 @@
       .front .num { --a: calc(var(--o) + 0.01); --b: calc(var(--o) + 0.11); }
       .front h3 { --a: calc(var(--o) + 0.02); --b: calc(var(--o) + 0.13); }
       .front p { --a: calc(var(--o) + 0.04); --b: calc(var(--o) + 0.16); }
+      .front .ico { --a: calc(var(--o) + 0.02); --b: calc(var(--o) + 0.13); }
       html.anim .frentes .stage {
         position: sticky;
         top: 10svh;
@@ -544,6 +614,21 @@
       }
       html.anim .frentes::after { content: ""; display: block; height: 25svh; }
       html.anim .frentes .stage .wrap { width: 100%; }
+      /* com uma frente aberta o palco precisa caber na tela: as linhas apertam o respiro enquanto isso */
+      html.anim .front { transition: padding 300ms ease; }
+      html.anim .ico { transition: translate 300ms ease; }
+      html.anim .fronts.com-aberta .front { --pt: 14px; padding-bottom: 16px; }
+      html.anim .fronts.com-aberta .ico { translate: 0 -10px; }
+    }
+    @media (min-width: 56.25em) and (min-height: 40em) and (max-height: 45em) {
+      html.anim .fronts.com-aberta .front { --pt: 10px; padding-bottom: 12px; }
+      html.anim .fronts.com-aberta .ico { translate: 0 -14px; }
+    }
+    /* palco estreito ou estreito e baixo: o texto aberto ocupa também a coluna do título, para ficar mais baixo */
+    @media (min-width: 56.25em) and (max-width: 62.5em) and (min-height: 40em),
+           (min-width: 56.25em) and (max-width: 80em) and (min-height: 40em) and (max-height: 43em) {
+      html.anim .painel { grid-column: 2 / -1; }
+      html.anim .extra { max-width: 56ch; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -635,20 +720,122 @@
                 <span class="num m k-rise" aria-hidden="true">01</span>
                 <h3 class="m k-rise">Desenvolvimento</h3>
                 <p class="m k-rise">Projetos e soluções tecnológicas para o esporte.</p>
+                <div class="painel" id="painel-desenvolvimento">
+                  <div class="painel-in">
+                    <div class="painel-corpo">
+                      <div class="extra">Desenvolvemos projetos públicos de tecnologia esportiva. O objetivo é contribuir para a democratização e a evolução dessa tecnologia no Brasil.</div>
+                      <!-- TODO: link do Forms -->
+                      <a class="entrar" href="#" target="_blank" rel="noopener noreferrer">Quero participar desta frente</a>
+                    </div>
+                  </div>
+                </div>
               </li>
               <li class="front">
                 <span class="rule m k-draw" aria-hidden="true"></span>
                 <span class="num m k-rise" aria-hidden="true">02</span>
                 <h3 class="m k-rise">Comunicação</h3>
                 <p class="m k-rise">Conteúdo que aproxima a tecnologia de quem pratica, acompanha e estuda esporte.</p>
+                <div class="painel" id="painel-comunicacao">
+                  <div class="painel-in">
+                    <div class="painel-corpo">
+                      <div class="extra">Produzimos conteúdo informativo em vídeos, posts, artigos de blog e newsletters. Divulgamos descobertas, ampliamos debates e facilitamos o acesso a esse tipo de informação.</div>
+                      <!-- TODO: link do Forms -->
+                      <a class="entrar" href="#" target="_blank" rel="noopener noreferrer">Quero participar desta frente</a>
+                    </div>
+                  </div>
+                </div>
               </li>
               <li class="front">
                 <span class="rule m k-draw" aria-hidden="true"></span>
                 <span class="num m k-rise" aria-hidden="true">03</span>
                 <h3 class="m k-rise">Conhecimento</h3>
                 <p class="m k-rise">Estudo, troca de experiências e divulgação do que acontece na área.</p>
+                <div class="painel" id="painel-conhecimento">
+                  <div class="painel-in">
+                    <div class="painel-corpo">
+                      <div class="extra">Fazemos pesquisas, artigos científicos e estudos, e divulgamos o que aprendemos. Também mantemos uma rede de networking que apoia a produção de tecnologia e a evolução de quem já atua no setor.</div>
+                      <!-- TODO: link do Forms -->
+                      <a class="entrar" href="#" target="_blank" rel="noopener noreferrer">Quero participar desta frente</a>
+                    </div>
+                  </div>
+                </div>
               </li>
             </ul>
+            <script>
+              /* Frentes expansíveis: este script cria os botões; os painéis já nascem fechados porque o <head> marcou
+                 html.acc. Sem JS não há html.acc: os três textos ficam abertos e não existem botões. */
+              (function () {
+                var root = document.documentElement;
+                try {
+                  var list = document.querySelector('.fronts');
+                  var stage = list.closest('.stage');
+                  var reduced = matchMedia('(prefers-reduced-motion: reduce)');
+                  var settle = 0;
+
+                  var setOpen = function (li, open) {
+                    li.classList.toggle('aberta', open);
+                    li.querySelector('h3 button').setAttribute('aria-expanded', open ? 'true' : 'false');
+                    var panel = li.querySelector('.painel');
+                    if (open) panel.removeAttribute('inert'); else panel.setAttribute('inert', '');
+                  };
+
+                  // o mínimo a rolar para a linha, já no layout final, caber entre a barra fixa e a base da janela
+                  var scrollNeeded = function (li, current) {
+                    var above = current && (current.compareDocumentPosition(li) & Node.DOCUMENT_POSITION_FOLLOWING)
+                      ? current.querySelector('.painel').offsetHeight : 0; // o painel de cima que vai fechar
+                    var panel = li.querySelector('.painel'), body = li.querySelector('.painel-corpo');
+                    var top = li.querySelector('h3').getBoundingClientRect().top - above;
+                    var bottom = panel.getBoundingClientRect().top - above +
+                      body.querySelector('.entrar').getBoundingClientRect().bottom - body.getBoundingClientRect().top;
+                    var bar = document.getElementById('topbar');
+                    var min = bar ? bar.offsetHeight : 0;
+                    var delta = Math.max(0, Math.ceil(bottom - innerHeight));
+                    if (top - delta < min) delta = Math.floor(top - min);
+                    return delta;
+                  };
+
+                  var toggle = function (li) {
+                    var open = !li.classList.contains('aberta');
+                    var current = list.querySelector('.front.aberta');
+                    // na faixa ancorada quem faz a linha caber é o layout: a rolagem não muda
+                    var delta = open && getComputedStyle(stage).position !== 'sticky' ? scrollNeeded(li, current) : 0;
+                    clearTimeout(settle);
+                    list.classList.add('solta');
+                    root.style.overflowAnchor = 'none'; // o navegador não "corrige" a rolagem porque uma altura mudou
+                    if (current && current !== li) setOpen(current, false);
+                    setOpen(li, open);
+                    list.classList.toggle('com-aberta', open);
+                    if (delta) scrollBy({ top: delta, behavior: reduced.matches ? 'auto' : 'smooth' });
+                    settle = setTimeout(function () {
+                      root.style.overflowAnchor = '';
+                      dispatchEvent(new Event('frentes:altura')); // o fallback de rolagem recalcula já, antes de soltar as linhas
+                      if (!list.querySelector('.front.aberta')) list.classList.remove('solta');
+                    }, 400);
+                  };
+
+                  [].forEach.call(list.querySelectorAll('.front'), function (li) {
+                    var h3 = li.querySelector('h3');
+                    var button = document.createElement('button');
+                    button.type = 'button';
+                    button.setAttribute('aria-controls', li.querySelector('.painel').id);
+                    while (h3.firstChild) button.appendChild(h3.firstChild);
+                    h3.appendChild(button);
+                    var ico = document.createElement('span');
+                    ico.className = 'ico m k-rise';
+                    ico.setAttribute('aria-hidden', 'true');
+                    ico.appendChild(document.createElement('span')).textContent = '+';
+                    li.appendChild(ico);
+                    setOpen(li, false);
+                    button.addEventListener('click', function () { toggle(li); });
+                    // a linha inteira é clicável (focável continua sendo só o botão); o texto aberto e o link não alternam
+                    li.addEventListener('click', function (e) {
+                      if (e.target.closest('button, a, .painel-corpo') || String(getSelection())) return;
+                      toggle(li);
+                    });
+                  });
+                } catch (e) { root.classList.remove('acc'); }
+              })();
+            </script>
           </div>
         </div>
       </div>
@@ -957,6 +1144,7 @@
       addEventListener('scroll', schedule, { passive: true });
       addEventListener('resize', function () { read(); });
       addEventListener('load', read);
+      addEventListener('frentes:altura', function () { read(); live = items; update(); });
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(read);
       read();
     })();
