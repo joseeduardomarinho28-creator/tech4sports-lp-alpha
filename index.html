@@ -132,7 +132,7 @@
 
     /* Topo: cartaz */
     .top { border-bottom: 6px solid var(--accent); }
-    .top .wrap {
+    .top > .wrap {
       display: flex;
       flex-direction: column;
       min-height: calc(100vh - 6px);
@@ -144,6 +144,25 @@
     /* o desenho do logo tem respiro interno no viewBox; a margem negativa alinha a marca à coluna do texto */
     .brand svg { display: block; flex: none; width: var(--logo); height: var(--logo); margin-left: calc(var(--logo) * -0.19); }
     .brand span { font-weight: 700; font-size: 2rem; letter-spacing: -0.02em; }
+
+    /* Menu: um só <nav>. No topo fica sob o logo (ou ao lado, a partir de 600px) e é o mesmo que passa para a barra fixa */
+    .masthead { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .menu ul { display: flex; column-gap: 24px; }
+    .menu a {
+      display: inline-flex;
+      align-items: center;
+      min-width: 48px;
+      min-height: 48px;
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 6px;
+    }
+    .menu a:hover { text-decoration-color: var(--accent); text-decoration-thickness: 3px; }
     h1 {
       margin-top: auto;
       padding-top: 56px;
@@ -157,7 +176,8 @@
     /* Faixas */
     .band { border-bottom: 1px solid var(--ink); padding-block: var(--band); }
     .band .wrap { display: grid; gap: 28px; }
-    .band h2.label { font-size: 1.125rem; letter-spacing: -0.01em; line-height: 1.3; }
+    /* align-self: o título não estica até a altura da linha, e o anel de foco (menu) abraça só o texto */
+    .band h2.label { align-self: start; font-size: 1.125rem; letter-spacing: -0.01em; line-height: 1.3; }
 
     .about {
       font-weight: 700;
@@ -173,10 +193,11 @@
     .markstage { position: relative; overflow-x: clip; }
     .markstage .stage { display: flex; align-items: center; padding-block: var(--band); }
     .markstage .wrap { display: block; }
+    .markstage { --mkh: min(56svh, 460px, calc((100vw - 2 * var(--gutter)) * 0.6)); }
     .markbox {
       position: relative;
       aspect-ratio: 340 / 320;
-      height: min(56svh, 460px, calc((100vw - 2 * var(--gutter)) * 0.6));
+      height: var(--mkh);
     }
     .markbox .mark { display: block; width: 100%; height: 100%; overflow: visible; }
     .curve { transform-box: fill-box; transform-origin: 100% 100%; }
@@ -320,7 +341,7 @@
       .btn { min-width: 320px; min-height: 72px; font-size: 1.25rem; }
       .call .wrap { grid-template-columns: 1fr; }
       .call h2, .call .btn { grid-column: auto; }
-      .top .wrap { padding-bottom: 56px; }
+      .top > .wrap { padding-bottom: 56px; }
       .brand { --logo: 100px; }
     }
 
@@ -423,10 +444,29 @@
     .brand-s svg { display: block; flex: none; width: var(--logo); height: var(--logo); margin-left: calc(var(--logo) * -0.19); }
     .brand-s span { font-weight: 700; font-size: 1rem; letter-spacing: -0.02em; white-space: nowrap; }
     .topbar .btn { flex: none; width: auto; min-width: 0; min-height: 48px; padding: 10px 14px; font-size: 1rem; white-space: nowrap; }
-    @media (min-width: 600px) {
+    /* menu na barra fixa, de 600px para cima (em em: acompanha a fonte do navegador). Botão com largura
+       conhecida para o menu parar antes dele */
+    @keyframes menu-in { from { opacity: 0; transform: translate3d(0, -12px, 0); } to { opacity: 1; transform: none; } }
+    @media (min-width: 37.5em) {
+      .masthead { flex-direction: row; align-items: center; justify-content: space-between; }
+      :root { --bar-btn: 9.5rem; --bar-gap: 16px; }
+      .topbar .btn { width: var(--bar-btn); padding-inline: 8px; }
+      .menu.in-bar {
+        position: fixed;
+        z-index: 5;
+        top: calc((var(--bar) - 49px) / 2);
+        right: calc(max(0px, (100% - var(--max)) / 2) + var(--gutter) + var(--bar-btn) + var(--bar-gap));
+        animation: menu-in 200ms ease-out;
+      }
+      .menu.in-bar ul { column-gap: 14px; }
+      .menu.in-bar a { font-size: 0.9375rem; }
+    }
+    @media (min-width: 47.5em) {
+      :root { --bar-btn: 11rem; --bar-gap: 32px; }
       .brand-s { --logo: 40px; }
       .brand-s span { font-size: 1.125rem; }
-      .topbar .btn { padding: 10px 24px; }
+      .menu.in-bar ul { column-gap: 24px; }
+      .menu.in-bar a { font-size: 1rem; }
     }
 
     /* ============ B3: o logo grande acompanha o mouse (JS põe --ux/--uy em unidades do SVG e --dx/--dy em px) ============ */
@@ -434,25 +474,29 @@
     .shift-b { transform: translate(calc(var(--ux, 0) * -1px), calc(var(--uy, 0) * -1px)); }
     .tail { translate: calc(var(--dx, 0) * 1px) calc(var(--dy, 0) * 1px); }
 
-    /* Sobre: o logo cresce e as linhas viram filetes (faixa ancorada curta) */
-    html.anim .markstage { height: 170svh; }
-    html.anim .markstage .stage { position: sticky; top: 0; height: 100svh; padding-block: 0; }
-    @media (min-width: 900px) { html.anim .markstage { height: 190svh; } }
+    /* Sobre: o logo cresce e as linhas viram filetes (faixa ancorada curta).
+       O palco tem só a altura do logo mais o respiro, preso no meio da tela; o ::after é o trecho em que ele fica preso */
+    html.anim .markstage .stage {
+      position: sticky;
+      top: calc(50svh - var(--mkh) / 2 - 40px);
+      padding-block: 40px;
+    }
+    html.anim .markstage::after { content: ""; display: block; height: 15svh; }
     /* gates em em: acompanham o tamanho de fonte escolhido no navegador (16px = 1em), 520px = 32.5em */
     @media (max-height: 32.5em) {
-      html.anim .markstage { height: auto; }
-      html.anim .markstage .stage { position: static; height: auto; padding-block: var(--band); }
+      html.anim .markstage .stage { position: static; padding-block: var(--band); }
+      html.anim .markstage::after { content: none; }
     }
     .markstage { view-timeline: --mk block; }
-    /* faixa "cover": o desenho começa enquanto a faixa ainda entra e termina antes de ela soltar */
+    /* faixa "cover": o desenho começa com o logo já na tela e termina com ele inteiro à vista */
     .markstage .m { --tl: --mk; --rt: cover; }
-    .c1 { --a: 0.12; --b: 0.30; }
-    .c2 { --a: 0.16; --b: 0.34; }
-    .c3 { --a: 0.20; --b: 0.38; }
-    .bar { --a: 0.36; --b: 0.46; }
-    .t1 { --a: 0.44; --b: 0.60; }
-    .t2 { --a: 0.48; --b: 0.63; }
-    .t3 { --a: 0.52; --b: 0.65; }
+    .c1 { --a: 0.18; --b: 0.28; }
+    .c2 { --a: 0.20; --b: 0.30; }
+    .c3 { --a: 0.23; --b: 0.33; }
+    .bar { --a: 0.31; --b: 0.37; }
+    .t1 { --a: 0.36; --b: 0.45; }
+    .t2 { --a: 0.38; --b: 0.47; }
+    .t3 { --a: 0.41; --b: 0.48; }
 
     /* Textos que entram */
     .about { --a: 0; --b: 0.7; }
@@ -475,26 +519,26 @@
     /* Frentes: faixa ancorada curta, as três linhas entram em sequência */
     @media (min-width: 56.25em) and (min-height: 40em) {
       .frentes { view-timeline: --trk block; }
-      /* faixa "cover": a primeira linha entra enquanto a faixa escura ainda sobe (no máximo ~1/3 de tela vazia);
-         a ancoragem ocupa de 0,30 a 0,70 do percurso e a última linha termina em 0,70 */
+      /* faixa "cover": as três linhas entram em sequência enquanto a faixa escura sobe e já estão completas
+         quando ela chega ao topo (0,44 do percurso); depois vem só um trecho curto ancorado */
       .frentes .m, .frentes .front .m { --tl: --trk; --rt: cover; }
       .frentes .filete { --tl: view(); --rt: cover; }
-      .front:nth-child(1) { --o: 0.1; }
-      .front:nth-child(2) { --o: 0.3; }
-      .front:nth-child(3) { --o: 0.5; }
+      .front:nth-child(1) { --o: 0.12; }
+      .front:nth-child(2) { --o: 0.2; }
+      .front:nth-child(3) { --o: 0.28; }
       .front .rule { --a: var(--o); --b: calc(var(--o) + 0.06); }
-      .front .num { --a: calc(var(--o) + 0.01); --b: calc(var(--o) + 0.14); }
-      .front h3 { --a: calc(var(--o) + 0.03); --b: calc(var(--o) + 0.17); }
-      .front p { --a: calc(var(--o) + 0.05); --b: calc(var(--o) + 0.2); }
-      html.anim .frentes { height: 230svh; }
+      .front .num { --a: calc(var(--o) + 0.01); --b: calc(var(--o) + 0.11); }
+      .front h3 { --a: calc(var(--o) + 0.02); --b: calc(var(--o) + 0.13); }
+      .front p { --a: calc(var(--o) + 0.04); --b: calc(var(--o) + 0.16); }
       html.anim .frentes .stage {
         position: sticky;
-        top: 0;
-        height: 100svh;
+        top: 10svh;
+        min-height: 80svh;
         display: flex;
         align-items: center;
-        padding-block: clamp(32px, 7svh, 72px);
+        padding-block: 24px;
       }
+      html.anim .frentes::after { content: ""; display: block; height: 25svh; }
       html.anim .frentes .stage .wrap { width: 100%; }
     }
 
@@ -508,23 +552,34 @@
   <a class="skip" href="#conteudo">Pular para o conteúdo</a>
   <div class="progress" aria-hidden="true"></div>
 
-  <!-- B1: topo fixo. Oculto, inert e aria-hidden até o JS mostrar; sem JS nunca aparece. -->
-  <div class="topbar" id="topbar" aria-hidden="true" inert>
-    <div class="wrap topbar-in">
-      <div class="brand-s">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g transform="translate(6.56 0)"><path d="M237.30 96.00 L160.30 253.86 A14.00 14.00 0 0 0 172.89 274.00 L416.00 274.00 L416.00 250.00 L172.89 250.00 A10.00 10.00 0 0 1 181.87 264.38 L264.00 96.00 Z" fill="#111111"/><path d="M195.02 96.00 L126.15 237.20 A52.00 52.00 0 0 0 172.89 312.00 L416.00 312.00 L416.00 288.00 L172.89 288.00 A28.00 28.00 0 0 1 147.72 247.73 L221.72 96.00 Z" fill="#111111"/><path d="M152.74 96.00 L91.99 220.55 A90.00 90.00 0 0 0 172.89 350.00 L416.00 350.00 L416.00 326.00 L172.89 326.00 A66.00 66.00 0 0 1 113.57 231.07 L179.44 96.00 Z" fill="#111111"/><rect x="274.00" y="96.00" width="84.00" height="320.00" fill="#F4F2ED"/><rect x="288.00" y="96.00" width="56.00" height="320.00" fill="#E30613"/></g></svg>
-        <span>tech4sports</span>
-      </div>
-      <!-- TODO: link do Forms -->
-      <a class="btn" href="#" target="_blank" rel="noopener noreferrer">Quero participar</a>
-    </div>
-  </div>
-
   <header class="top">
     <div class="wrap">
-      <div class="brand">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g transform="translate(6.56 0)"><path d="M237.30 96.00 L160.30 253.86 A14.00 14.00 0 0 0 172.89 274.00 L416.00 274.00 L416.00 250.00 L172.89 250.00 A10.00 10.00 0 0 1 181.87 264.38 L264.00 96.00 Z" fill="#111111"/><path d="M195.02 96.00 L126.15 237.20 A52.00 52.00 0 0 0 172.89 312.00 L416.00 312.00 L416.00 288.00 L172.89 288.00 A28.00 28.00 0 0 1 147.72 247.73 L221.72 96.00 Z" fill="#111111"/><path d="M152.74 96.00 L91.99 220.55 A90.00 90.00 0 0 0 172.89 350.00 L416.00 350.00 L416.00 326.00 L172.89 326.00 A66.00 66.00 0 0 1 113.57 231.07 L179.44 96.00 Z" fill="#111111"/><rect x="274.00" y="96.00" width="84.00" height="320.00" fill="#F4F2ED"/><rect x="288.00" y="96.00" width="56.00" height="320.00" fill="#E30613"/></g></svg>
-        <span>tech4sports</span>
+      <div class="masthead">
+        <div class="brand">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g transform="translate(6.56 0)"><path d="M237.30 96.00 L160.30 253.86 A14.00 14.00 0 0 0 172.89 274.00 L416.00 274.00 L416.00 250.00 L172.89 250.00 A10.00 10.00 0 0 1 181.87 264.38 L264.00 96.00 Z" fill="#111111"/><path d="M195.02 96.00 L126.15 237.20 A52.00 52.00 0 0 0 172.89 312.00 L416.00 312.00 L416.00 288.00 L172.89 288.00 A28.00 28.00 0 0 1 147.72 247.73 L221.72 96.00 Z" fill="#111111"/><path d="M152.74 96.00 L91.99 220.55 A90.00 90.00 0 0 0 172.89 350.00 L416.00 350.00 L416.00 326.00 L172.89 326.00 A66.00 66.00 0 0 1 113.57 231.07 L179.44 96.00 Z" fill="#111111"/><rect x="274.00" y="96.00" width="84.00" height="320.00" fill="#F4F2ED"/><rect x="288.00" y="96.00" width="56.00" height="320.00" fill="#E30613"/></g></svg>
+          <span>tech4sports</span>
+        </div>
+
+        <nav class="menu" aria-label="Principal">
+          <ul>
+            <li><a href="#sobre">Quem somos</a></li>
+            <li><a href="#frentes">Frentes</a></li>
+            <li><a href="#contato">Contato</a></li>
+          </ul>
+        </nav>
+
+        <!-- B1: topo fixo. Oculto, inert e aria-hidden até o JS mostrar; sem JS nunca aparece.
+             Vem depois do menu para o Tab seguir a ordem visual da barra (menu, botão). -->
+        <div class="topbar" id="topbar" aria-hidden="true" inert>
+          <div class="wrap topbar-in">
+            <div class="brand-s">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g transform="translate(6.56 0)"><path d="M237.30 96.00 L160.30 253.86 A14.00 14.00 0 0 0 172.89 274.00 L416.00 274.00 L416.00 250.00 L172.89 250.00 A10.00 10.00 0 0 1 181.87 264.38 L264.00 96.00 Z" fill="#111111"/><path d="M195.02 96.00 L126.15 237.20 A52.00 52.00 0 0 0 172.89 312.00 L416.00 312.00 L416.00 288.00 L172.89 288.00 A28.00 28.00 0 0 1 147.72 247.73 L221.72 96.00 Z" fill="#111111"/><path d="M152.74 96.00 L91.99 220.55 A90.00 90.00 0 0 0 172.89 350.00 L416.00 350.00 L416.00 326.00 L172.89 326.00 A66.00 66.00 0 0 1 113.57 231.07 L179.44 96.00 Z" fill="#111111"/><rect x="274.00" y="96.00" width="84.00" height="320.00" fill="#F4F2ED"/><rect x="288.00" y="96.00" width="56.00" height="320.00" fill="#E30613"/></g></svg>
+              <span>tech4sports</span>
+            </div>
+            <!-- TODO: link do Forms -->
+            <a class="btn" href="#" target="_blank" rel="noopener noreferrer">Quero participar</a>
+          </div>
+        </div>
       </div>
 
       <h1>Tecnologia aplicada ao esporte, em todas as modalidades.</h1>
@@ -538,7 +593,7 @@
   <main id="conteudo">
     <section class="band sobre" id="sobre" aria-labelledby="t-sobre">
       <div class="wrap">
-        <h2 class="label" id="t-sobre">Sobre</h2>
+        <h2 class="label" id="t-sobre" tabindex="-1">Sobre</h2>
         <p class="about m k-rise">O tech4sports reúne pessoas interessadas em tecnologia aplicada ao esporte, em todas as modalidades, dos esportes tradicionais aos esports.</p>
       </div>
 
@@ -568,7 +623,7 @@
       <span class="filete m k-draw" aria-hidden="true"></span>
       <div class="stage">
         <div class="wrap">
-          <h2 class="label" id="t-frentes">Frentes</h2>
+          <h2 class="label" id="t-frentes" tabindex="-1">Frentes</h2>
           <div class="body">
             <ul class="fronts">
               <li class="front">
@@ -608,7 +663,7 @@
 
     <section class="band dark" id="contato" aria-labelledby="t-contato">
       <div class="wrap">
-        <h2 class="label" id="t-contato">Contato</h2>
+        <h2 class="label" id="t-contato" tabindex="-1">Contato</h2>
         <ul class="contact body">
           <li><span class="rule m k-draw" aria-hidden="true"></span><a class="m k-slide" href="https://www.instagram.com/tech4sports/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
           <li><span class="rule m k-draw" aria-hidden="true"></span><a class="m k-slide" href="https://www.linkedin.com/company/tech4sportsbr/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
@@ -639,14 +694,16 @@
 
       /* B1: o topo fixo aparece depois que o botão do primeiro topo sai da tela e some quando o botão da chamada aparece */
       var bar = document.getElementById('topbar');
-      var heroBtn = document.querySelector('.top .btn');
+      var heroBtn = document.querySelector('.top > .wrap > div > .btn');
       var callBtn = document.querySelector('#participe .btn');
+      var menu = document.querySelector('.menu');
       if (bar && heroBtn && callBtn) {
         root.classList.add('tb');
         var heroGone = false, callSeen = false;
         var apply = function () {
           var show = heroGone && !callSeen;
           bar.classList.toggle('on', show);
+          if (menu) menu.classList.toggle('in-bar', show); // o CSS só o prende à barra a partir de 600px
           if (show) { bar.removeAttribute('inert'); bar.removeAttribute('aria-hidden'); }
           else { bar.setAttribute('inert', ''); bar.setAttribute('aria-hidden', 'true'); }
         };
@@ -706,6 +763,32 @@
         addEventListener('resize', measure);
         measure();
       }
+    })();
+  </script>
+
+  <script>
+    /* Menu: o clique leva a uma posição em que a seção já aparece completa e põe o foco no título.
+       Sem JS, ou com prefers-reduced-motion: reduce, os links são âncoras comuns. */
+    (function () {
+      var menu = document.querySelector('.menu');
+      var bar = document.getElementById('topbar');
+      var reduced = matchMedia('(prefers-reduced-motion: reduce)');
+      if (!menu) return;
+      menu.addEventListener('click', function (e) {
+        var link = e.target.closest('a');
+        if (!link || reduced.matches || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var section = document.getElementById(link.hash.slice(1));
+        var title = section && section.querySelector('h2');
+        if (!title) return;
+        e.preventDefault();
+        var stage = section.querySelector(':scope > .stage');
+        var y = stage && getComputedStyle(stage).position === 'sticky'
+          ? section.getBoundingClientRect().top + scrollY // faixa ancorada: com ela no topo da tela, as três linhas já entraram
+          : title.getBoundingClientRect().top + scrollY - (bar ? bar.offsetHeight : 0) - 24;
+        try { if (location.hash !== link.hash) history.pushState(null, '', link.hash); } catch (err) {}
+        scrollTo({ top: y, behavior: 'auto' });
+        title.focus({ preventScroll: true });
+      });
     })();
   </script>
 
