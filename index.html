@@ -696,8 +696,9 @@
       var reduced = matchMedia('(prefers-reduced-motion: reduce)');
       if (!hasIO) return;
 
-      /* B1: o topo fixo aparece depois que o botão do primeiro topo sai da tela. Enquanto o botão da chamada está na tela:
-         a partir de 600px a barra e o menu ficam e só o botão da barra se oculta; abaixo disso a barra inteira some */
+      /* B1: o topo fixo aparece depois que o botão do primeiro topo sai da tela. A partir de 600px a barra e o menu ficam, e
+         só o botão da barra se oculta enquanto pelo menos metade do botão da chamada está visível abaixo da barra.
+         Abaixo de 600px a barra inteira some enquanto o botão da chamada está na tela */
       var bar = document.getElementById('topbar');
       var heroBtn = document.querySelector('.top > .wrap > div > .btn');
       var callBtn = document.querySelector('#participe .btn');
@@ -705,11 +706,11 @@
       var barBtn = bar && bar.querySelector('.btn');
       if (barBtn && heroBtn && callBtn) {
         root.classList.add('tb');
-        var heroGone = false, callSeen = false;
+        var heroGone = false, callSeen = false, callHalf = false;
         var wide = matchMedia('(min-width: 37.5em)'); // mesmo corte do CSS em que o menu vai para a barra
         var apply = function () {
           var show = heroGone && (wide.matches || !callSeen);
-          var hideBtn = wide.matches && callSeen;
+          var hideBtn = wide.matches && callHalf;
           barBtn.classList.toggle('off', hideBtn);
           if (hideBtn) barBtn.setAttribute('inert', ''); else barBtn.removeAttribute('inert');
           bar.classList.toggle('on', show);
@@ -728,6 +729,21 @@
         // salta por cima do botão em telas baixas, onde ele começa abaixo da dobra
         new IntersectionObserver(seen, { rootMargin: '0px 0px 100000px 0px' }).observe(heroBtn);
         new IntersectionObserver(seen).observe(callBtn);
+        // para o botão da barra: a margem negativa no topo tira da conta o trecho do botão da chamada que a barra cobre.
+        // rootMargin não muda depois de criado, então o observer é refeito se a altura da barra mudar
+        var halfIO = null, barHeight = -1;
+        var watchHalf = function () {
+          if (bar.offsetHeight === barHeight) return;
+          barHeight = bar.offsetHeight;
+          if (halfIO) halfIO.disconnect();
+          halfIO = new IntersectionObserver(function (es) {
+            callHalf = es[es.length - 1].intersectionRatio >= 0.5;
+            apply();
+          }, { rootMargin: -barHeight + 'px 0px 0px 0px', threshold: [0, 0.5, 1] });
+          halfIO.observe(callBtn);
+        };
+        watchHalf();
+        addEventListener('resize', watchHalf);
         if (wide.addEventListener) wide.addEventListener('change', apply);
       }
 
