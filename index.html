@@ -444,6 +444,10 @@
     .brand-s svg { display: block; flex: none; width: var(--logo); height: var(--logo); margin-left: calc(var(--logo) * -0.19); }
     .brand-s span { font-weight: 700; font-size: 1rem; letter-spacing: -0.02em; white-space: nowrap; }
     .topbar .btn { flex: none; width: auto; min-width: 0; min-height: 48px; padding: 10px 14px; font-size: 1rem; white-space: nowrap; }
+    /* botão da barra enquanto o da chamada está na tela: some na hora (nunca dois iguais) e volta com um fade.
+       visibility mantém o espaço, então o menu não sai do lugar */
+    .topbar .btn { transition: opacity 150ms ease-out, transform 120ms ease-out; }
+    .topbar .btn.off { visibility: hidden; opacity: 0; transition: none; }
     /* menu na barra fixa, de 600px para cima (em em: acompanha a fonte do navegador). Botão com largura
        conhecida para o menu parar antes dele */
     @keyframes menu-in { from { opacity: 0; transform: translate3d(0, -12px, 0); } to { opacity: 1; transform: none; } }
@@ -692,30 +696,39 @@
       var reduced = matchMedia('(prefers-reduced-motion: reduce)');
       if (!hasIO) return;
 
-      /* B1: o topo fixo aparece depois que o botão do primeiro topo sai da tela e some quando o botão da chamada aparece */
+      /* B1: o topo fixo aparece depois que o botão do primeiro topo sai da tela. Enquanto o botão da chamada está na tela:
+         a partir de 600px a barra e o menu ficam e só o botão da barra se oculta; abaixo disso a barra inteira some */
       var bar = document.getElementById('topbar');
       var heroBtn = document.querySelector('.top > .wrap > div > .btn');
       var callBtn = document.querySelector('#participe .btn');
       var menu = document.querySelector('.menu');
-      if (bar && heroBtn && callBtn) {
+      var barBtn = bar && bar.querySelector('.btn');
+      if (barBtn && heroBtn && callBtn) {
         root.classList.add('tb');
         var heroGone = false, callSeen = false;
+        var wide = matchMedia('(min-width: 37.5em)'); // mesmo corte do CSS em que o menu vai para a barra
         var apply = function () {
-          var show = heroGone && !callSeen;
+          var show = heroGone && (wide.matches || !callSeen);
+          var hideBtn = wide.matches && callSeen;
+          barBtn.classList.toggle('off', hideBtn);
+          if (hideBtn) barBtn.setAttribute('inert', ''); else barBtn.removeAttribute('inert');
           bar.classList.toggle('on', show);
           if (menu) menu.classList.toggle('in-bar', show); // o CSS só o prende à barra a partir de 600px
           if (show) { bar.removeAttribute('inert'); bar.removeAttribute('aria-hidden'); }
           else { bar.setAttribute('inert', ''); bar.setAttribute('aria-hidden', 'true'); }
         };
-        var barIO = new IntersectionObserver(function (es) {
+        var seen = function (es) {
           es.forEach(function (e) {
             if (e.target === heroBtn) heroGone = !e.isIntersecting && e.boundingClientRect.bottom <= 0;
             else callSeen = e.isIntersecting;
           });
           apply();
-        });
-        barIO.observe(heroBtn);
-        barIO.observe(callBtn);
+        };
+        // "saiu da tela" = ficou acima dela. A margem enorme embaixo faz o aviso chegar também quando um clique no menu
+        // salta por cima do botão em telas baixas, onde ele começa abaixo da dobra
+        new IntersectionObserver(seen, { rootMargin: '0px 0px 100000px 0px' }).observe(heroBtn);
+        new IntersectionObserver(seen).observe(callBtn);
+        if (wide.addEventListener) wide.addEventListener('change', apply);
       }
 
       /* B2: em toque (sem hover), a linha das Frentes no centro da tela recebe o mesmo destaque do hover */
