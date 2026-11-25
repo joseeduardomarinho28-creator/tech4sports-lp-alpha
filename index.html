@@ -342,6 +342,7 @@
       max-width: 20ch;
       text-wrap: balance;
     }
+    .call p { max-width: 40em; text-wrap: pretty; } /* texto corrente: herda tamanho e cor do corpo */
     .call .btn { margin-top: 12px; }
 
     .contact li { position: relative; }
@@ -567,7 +568,7 @@
 
     /* Textos que entram */
     .about { --a: 0; --b: 0.7; }
-    .call h2 { --a: 0; --b: 0.7; }
+    .call h2, .call p { --a: 0; --b: 0.7; }
     .call .cta { --a: 0.05; --b: 0.9; }
     .privacy .body { --a: 0; --b: 0.5; }
     .filete { --rt: cover; --a: 0.04; --b: 0.34; }
@@ -844,6 +845,7 @@
     <section class="band call" id="participe" aria-labelledby="t-participe">
       <span class="filete m k-draw" aria-hidden="true"></span>
       <div class="wrap">
+        <p class="m k-rise">Qualquer pessoa interessada pode participar, se informar e contribuir com a revolução da tecnologia esportiva brasileira.</p>
         <h2 id="t-participe" class="m k-rise">Se você trabalha, estuda ou se interessa por tecnologia esportiva, participe.</h2>
         <div class="cta m k-slide">
           <!-- TODO: link do Forms -->
