@@ -223,10 +223,11 @@
     .dark ::selection { background: var(--paper); color: var(--ink); }
     .dark :focus-visible { outline-color: var(--paper); }
 
-    /* Palavra sob o mouse: fica um pouco maior e vermelha. Os span.w são criados pelo JS, só com mouse */
+    /* Palavra sob o mouse: fica um pouco maior e vermelha. Os span.w são criados pelo JS, só com mouse; a escala (--s)
+       é calculada por ele a partir da folga até as palavras vizinhas, para não colar nelas */
     .w { display: inline-block; transform-origin: 50% 55%; transition: transform 120ms ease-out, color 120ms ease-out; }
     @media (hover: hover) and (pointer: fine) {
-      .w:hover { color: var(--accent); transform: scale(1.08); }
+      .w:hover { color: var(--accent); transform: scale(var(--s, 1.04)); }
     }
 
     /* Filete vermelho que fecha ou abre uma faixa */
@@ -1152,6 +1153,29 @@
           });
           no.parentNode.replaceChild(partes, no);
         });
+      });
+
+      // retângulo sem a escala que ainda esteja em andamento (a origem horizontal é o centro, que não se move)
+      var caixa = function (el) {
+        var r = el.getBoundingClientRect(), t = getComputedStyle(el).transform;
+        var s = t.indexOf('matrix(') === 0 ? parseFloat(t.slice(7)) || 1 : 1;
+        var meio = (r.left + r.right) / 2, largura = r.width / s;
+        return { left: meio - largura / 2, right: meio + largura / 2, width: largura, top: r.top, bottom: r.bottom };
+      };
+      // um só ouvinte para todas as palavras. Cada lado cresce no máximo 40% da folga até a vizinha da mesma linha,
+      // com a escala entre 1,03 e 1,08
+      document.addEventListener('pointerover', function (e) {
+        var el = e.target;
+        if (!el.classList || !el.classList.contains('w')) return;
+        var eu = caixa(el), folgas = [];
+        [el.previousElementSibling, el.nextElementSibling].forEach(function (vizinha, depois) {
+          if (!vizinha || !vizinha.classList.contains('w')) return;
+          var v = caixa(vizinha);
+          if (Math.min(eu.bottom, v.bottom) - Math.max(eu.top, v.top) <= (eu.bottom - eu.top) / 2) return; // outra linha
+          folgas.push(depois ? v.left - eu.right : eu.left - v.right);
+        });
+        var folga = folgas.length ? Math.max(0, Math.min.apply(Math, folgas)) : 0.25 * parseFloat(getComputedStyle(el).fontSize);
+        el.style.setProperty('--s', Math.max(1.03, 1 + Math.min(0.08, 0.8 * folga / eu.width)).toFixed(4));
       });
     })();
   </script>
