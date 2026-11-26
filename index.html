@@ -279,22 +279,8 @@
        Fechado: altura 0 (0fr), invisível para o olho, o Tab e o leitor de tela */
     .painel { grid-column: 2; display: grid; grid-template-rows: 1fr; }
     .painel-in { min-height: 0; overflow: hidden; margin-inline: -8px; }
-    .painel-corpo { padding: 12px 8px 8px; }
+    .painel-corpo { padding: 12px 8px 16px; } /* o respiro de baixo separa o texto aberto da linha seguinte */
     .extra { max-width: 40ch; font-size: 1.0625rem; line-height: 1.45; text-wrap: pretty; }
-    .entrar {
-      display: inline-flex;
-      align-items: center;
-      min-height: 48px;
-      margin-top: 4px;
-      color: var(--paper);
-      font-weight: 700;
-      font-size: 1.0625rem;
-      line-height: 1.3;
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 6px;
-    }
-    .entrar:hover { text-decoration-color: var(--accent); text-decoration-thickness: 3px; }
     html.acc .front { cursor: pointer; }
     html.acc .painel-corpo { cursor: auto; }
     html.acc .painel {
@@ -725,8 +711,6 @@
                   <div class="painel-in">
                     <div class="painel-corpo">
                       <div class="extra">Desenvolvemos projetos públicos de tecnologia esportiva. O objetivo é contribuir para a democratização e a evolução dessa tecnologia no Brasil.</div>
-                      <!-- TODO: link do Forms -->
-                      <a class="entrar" href="#" target="_blank" rel="noopener noreferrer">Quero participar desta frente</a>
                     </div>
                   </div>
                 </div>
@@ -740,8 +724,6 @@
                   <div class="painel-in">
                     <div class="painel-corpo">
                       <div class="extra">Produzimos conteúdo informativo em vídeos, posts, artigos de blog e newsletters. Divulgamos descobertas, ampliamos debates e facilitamos o acesso a esse tipo de informação.</div>
-                      <!-- TODO: link do Forms -->
-                      <a class="entrar" href="#" target="_blank" rel="noopener noreferrer">Quero participar desta frente</a>
                     </div>
                   </div>
                 </div>
@@ -755,8 +737,6 @@
                   <div class="painel-in">
                     <div class="painel-corpo">
                       <div class="extra">Fazemos pesquisas, artigos científicos e estudos, e divulgamos o que aprendemos. Também mantemos uma rede de networking que apoia a produção de tecnologia e a evolução de quem já atua no setor.</div>
-                      <!-- TODO: link do Forms -->
-                      <a class="entrar" href="#" target="_blank" rel="noopener noreferrer">Quero participar desta frente</a>
                     </div>
                   </div>
                 </div>
@@ -787,7 +767,7 @@
                     var panel = li.querySelector('.painel'), body = li.querySelector('.painel-corpo');
                     var top = li.querySelector('h3').getBoundingClientRect().top - above;
                     var bottom = panel.getBoundingClientRect().top - above +
-                      body.querySelector('.entrar').getBoundingClientRect().bottom - body.getBoundingClientRect().top;
+                      body.querySelector('.extra').getBoundingClientRect().bottom - body.getBoundingClientRect().top;
                     var bar = document.getElementById('topbar');
                     var min = bar ? bar.offsetHeight : 0;
                     var delta = Math.max(0, Math.ceil(bottom - innerHeight));
@@ -828,7 +808,7 @@
                     li.appendChild(ico);
                     setOpen(li, false);
                     button.addEventListener('click', function () { toggle(li); });
-                    // a linha inteira é clicável (focável continua sendo só o botão); o texto aberto e o link não alternam
+                    // a linha inteira é clicável (focável continua sendo só o botão); o texto aberto não alterna
                     li.addEventListener('click', function (e) {
                       if (e.target.closest('button, a, .painel-corpo') || String(getSelection())) return;
                       toggle(li);
