@@ -1163,7 +1163,7 @@
         return { left: meio - largura / 2, right: meio + largura / 2, width: largura, top: r.top, bottom: r.bottom };
       };
       // um só ouvinte para todas as palavras. Cada lado cresce no máximo 40% da folga até a vizinha da mesma linha,
-      // com a escala entre 1,03 e 1,08
+      // com a escala entre 1,02 e 1,08
       document.addEventListener('pointerover', function (e) {
         var el = e.target;
         if (!el.classList || !el.classList.contains('w')) return;
@@ -1175,7 +1175,7 @@
           folgas.push(depois ? v.left - eu.right : eu.left - v.right);
         });
         var folga = folgas.length ? Math.max(0, Math.min.apply(Math, folgas)) : 0.25 * parseFloat(getComputedStyle(el).fontSize);
-        el.style.setProperty('--s', Math.max(1.03, 1 + Math.min(0.08, 0.8 * folga / eu.width)).toFixed(4));
+        el.style.setProperty('--s', Math.max(1.02, 1 + Math.min(0.08, 0.8 * folga / eu.width)).toFixed(4));
       });
     })();
   </script>
