@@ -199,6 +199,7 @@
       position: relative;
       aspect-ratio: 340 / 320;
       height: var(--mkh);
+      margin-inline: auto; /* centralizada na página; as três linhas saem dela para a direita */
     }
     .markbox .mark { display: block; width: 100%; height: 100%; overflow: visible; }
     .curve { transform-box: fill-box; transform-origin: 100% 100%; }
@@ -528,29 +529,18 @@
     .shift-b { transform: translate(calc(var(--ux, 0) * -1px), calc(var(--uy, 0) * -1px)); }
     .tail { translate: calc(var(--dx, 0) * 1px) calc(var(--dy, 0) * 1px); }
 
-    /* Sobre: o logo cresce e as linhas viram filetes (faixa ancorada curta).
-       O palco tem só a altura do logo mais o respiro, preso no meio da tela; o ::after é o trecho em que ele fica preso */
-    html.anim .markstage .stage {
-      position: sticky;
-      top: calc(50svh - var(--mkh) / 2 - 40px);
-      padding-block: 40px;
-    }
-    html.anim .markstage::after { content: ""; display: block; height: 15svh; }
-    /* gates em em: acompanham o tamanho de fonte escolhido no navegador (16px = 1em), 520px = 32.5em */
-    @media (max-height: 32.5em) {
-      html.anim .markstage .stage { position: static; padding-block: var(--band); }
-      html.anim .markstage::after { content: none; }
-    }
+    /* Sobre: o logo rola junto com a página, à mesma distância do texto; as linhas viram filetes com a rolagem */
+    html.anim .markstage .stage { padding-block: 40px; }
     .markstage { view-timeline: --mk block; }
-    /* faixa "cover": o desenho começa com o logo já na tela e termina com ele inteiro à vista */
+    /* faixa "cover": o desenho começa com o logo já na tela e termina (0,42) com ele ainda inteiro à vista */
     .markstage .m { --tl: --mk; --rt: cover; }
-    .c1 { --a: 0.18; --b: 0.28; }
-    .c2 { --a: 0.20; --b: 0.30; }
-    .c3 { --a: 0.23; --b: 0.33; }
-    .bar { --a: 0.31; --b: 0.37; }
-    .t1 { --a: 0.36; --b: 0.45; }
-    .t2 { --a: 0.38; --b: 0.47; }
-    .t3 { --a: 0.41; --b: 0.48; }
+    .c1 { --a: 0.13; --b: 0.23; }
+    .c2 { --a: 0.15; --b: 0.25; }
+    .c3 { --a: 0.17; --b: 0.28; }
+    .bar { --a: 0.25; --b: 0.31; }
+    .t1 { --a: 0.30; --b: 0.39; }
+    .t2 { --a: 0.32; --b: 0.41; }
+    .t3 { --a: 0.34; --b: 0.42; }
 
     /* Textos que entram */
     .about { --a: 0; --b: 0.7; }
