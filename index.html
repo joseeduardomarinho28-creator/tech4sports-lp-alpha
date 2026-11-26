@@ -223,6 +223,12 @@
     .dark ::selection { background: var(--paper); color: var(--ink); }
     .dark :focus-visible { outline-color: var(--paper); }
 
+    /* Palavra sob o mouse: fica um pouco maior e vermelha. Os span.w são criados pelo JS, só com mouse */
+    .w { display: inline-block; transform-origin: 50% 55%; transition: transform 120ms ease-out, color 120ms ease-out; }
+    @media (hover: hover) and (pointer: fine) {
+      .w:hover { color: var(--accent); transform: scale(1.08); }
+    }
+
     /* Filete vermelho que fecha ou abre uma faixa */
     .filete { position: absolute; left: 0; top: 0; width: 100%; height: 6px; background: var(--accent); transform-origin: 0 50%; }
 
@@ -1120,6 +1126,33 @@
       addEventListener('frentes:altura', function () { read(); live = items; update(); });
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(read);
       read();
+    })();
+  </script>
+
+  <script>
+    /* Palavra sob o mouse: cada palavra dos textos vira um span.w, só com mouse. Os espaços ficam fora dos spans,
+       então o textContent, a seleção e a quebra de linha não mudam. Sem JS ou em toque não existe nenhum span. */
+    (function () {
+      if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+      var fora = 'a, .btn, .menu, .contact, .num, .ico, svg, [aria-hidden], .topbar, .copied';
+      var palavra = /[\p{L}\p{N}]/u; // pontuação solta (o ponto depois de um link) fica como está
+      [].forEach.call(document.querySelectorAll('h1, h2, h3, p, .extra'), function (bloco) {
+        if (bloco.closest(fora)) return;
+        var andar = document.createTreeWalker(bloco, NodeFilter.SHOW_TEXT), nos = [], no;
+        while ((no = andar.nextNode())) if (!no.parentElement.closest(fora)) nos.push(no);
+        nos.forEach(function (no) {
+          var partes = document.createDocumentFragment();
+          no.textContent.split(/(\s+)/).forEach(function (parte) {
+            if (!parte) return;
+            if (!palavra.test(parte)) { partes.appendChild(document.createTextNode(parte)); return; }
+            var span = document.createElement('span');
+            span.className = 'w';
+            span.textContent = parte;
+            partes.appendChild(span);
+          });
+          no.parentNode.replaceChild(partes, no);
+        });
+      });
     })();
   </script>
 </body>
